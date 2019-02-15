@@ -14,19 +14,11 @@
  * limitations under the License.
  */
 
-package com.sparetimedevs.suspendmongo
+package test.listener
 
-import com.mongodb.reactivestreams.client.MongoCollection
+object StopMongoDbListener : MongoDbListener() {
 
-inline fun <reified T: Any> getCollection(database: Database): Collection<T> =
-		Collection(database, T::class.java.simpleName!!, T::class.java)
-
-class Collection<T: Any>(
-		private val database: Database,
-		private val collectionName: String,
-		private val clazz: Class<T>
-) {
-
-	internal fun getCollection(): MongoCollection<T> =
-			database.mongoDatabase.getCollection(collectionName, clazz)
+	override fun afterProject() {
+		stopMongoDb()
+	}
 }

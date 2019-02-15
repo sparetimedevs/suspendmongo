@@ -14,19 +14,11 @@
  * limitations under the License.
  */
 
-package com.sparetimedevs.suspendmongo
+package com.sparetimedevs.suspendmongo.crud
 
-import com.mongodb.reactivestreams.client.MongoCollection
+import com.mongodb.client.model.Filters
+import org.bson.conversions.Bson
+import org.bson.types.ObjectId
 
-inline fun <reified T: Any> getCollection(database: Database): Collection<T> =
-		Collection(database, T::class.java.simpleName!!, T::class.java)
-
-class Collection<T: Any>(
-		private val database: Database,
-		private val collectionName: String,
-		private val clazz: Class<T>
-) {
-
-	internal fun getCollection(): MongoCollection<T> =
-			database.mongoDatabase.getCollection(collectionName, clazz)
-}
+@PublishedApi
+internal fun idFilterQuery(id: ObjectId): Bson = Filters.eq("_id", id)

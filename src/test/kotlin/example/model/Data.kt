@@ -14,19 +14,14 @@
  * limitations under the License.
  */
 
-package com.sparetimedevs.suspendmongo
+package example.model
 
-import com.mongodb.reactivestreams.client.MongoCollection
+import org.bson.codecs.pojo.annotations.BsonCreator
+import org.bson.codecs.pojo.annotations.BsonProperty
 
-inline fun <reified T: Any> getCollection(database: Database): Collection<T> =
-		Collection(database, T::class.java.simpleName!!, T::class.java)
-
-class Collection<T: Any>(
-		private val database: Database,
-		private val collectionName: String,
-		private val clazz: Class<T>
-) {
-
-	internal fun getCollection(): MongoCollection<T> =
-			database.mongoDatabase.getCollection(collectionName, clazz)
-}
+data class TestUser @BsonCreator constructor(
+		@BsonProperty("firstName") val firstName: String,
+		@BsonProperty("lastName") val lastName: String,
+		@BsonProperty("age") val age: Int,
+		@BsonProperty("email") val email: String
+) : SuspendMongoDocument()

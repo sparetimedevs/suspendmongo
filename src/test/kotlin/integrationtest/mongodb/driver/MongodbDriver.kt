@@ -14,19 +14,13 @@
  * limitations under the License.
  */
 
-package com.sparetimedevs.suspendmongo
+package integrationtest.mongodb.driver
 
-import com.mongodb.reactivestreams.client.MongoCollection
+import org.bson.Document
 
-inline fun <reified T: Any> getCollection(database: Database): Collection<T> =
-		Collection(database, T::class.java.simpleName!!, T::class.java)
+internal interface MongodbDriver {
 
-class Collection<T: Any>(
-		private val database: Database,
-		private val collectionName: String,
-		private val clazz: Class<T>
-) {
+	fun insert(docsToInsert: List<Document>)
 
-	internal fun getCollection(): MongoCollection<T> =
-			database.mongoDatabase.getCollection(collectionName, clazz)
+	fun find(expectedAmount: Int) : List<Document>
 }

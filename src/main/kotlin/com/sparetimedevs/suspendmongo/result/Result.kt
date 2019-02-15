@@ -14,19 +14,14 @@
  * limitations under the License.
  */
 
-package com.sparetimedevs.suspendmongo
+package com.sparetimedevs.suspendmongo.result
 
-import com.mongodb.reactivestreams.client.MongoCollection
+/**
+ * Discriminated union. Also referred to as a monad.
+**/
+sealed class Result<out E: Error, out T> {
 
-inline fun <reified T: Any> getCollection(database: Database): Collection<T> =
-		Collection(database, T::class.java.simpleName!!, T::class.java)
+	data class Failure<E: Error>(val value: Error): Result<E, Nothing>()
 
-class Collection<T: Any>(
-		private val database: Database,
-		private val collectionName: String,
-		private val clazz: Class<T>
-) {
-
-	internal fun getCollection(): MongoCollection<T> =
-			database.mongoDatabase.getCollection(collectionName, clazz)
+	data class Success<T>(val value: T): Result<Nothing, T>()
 }

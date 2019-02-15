@@ -14,19 +14,11 @@
  * limitations under the License.
  */
 
-package com.sparetimedevs.suspendmongo
+package com.sparetimedevs.suspendmongo.result
 
-import com.mongodb.reactivestreams.client.MongoCollection
+inline fun <E: Error, T, C> Result<E, T>.fold(ifFailure: (Error) -> C, ifSuccess: (T) -> C): C = when (this) {
 
-inline fun <reified T: Any> getCollection(database: Database): Collection<T> =
-		Collection(database, T::class.java.simpleName!!, T::class.java)
+	is Result.Failure -> ifFailure(this.value)
 
-class Collection<T: Any>(
-		private val database: Database,
-		private val collectionName: String,
-		private val clazz: Class<T>
-) {
-
-	internal fun getCollection(): MongoCollection<T> =
-			database.mongoDatabase.getCollection(collectionName, clazz)
+	is Result.Success -> ifSuccess(this.value)
 }

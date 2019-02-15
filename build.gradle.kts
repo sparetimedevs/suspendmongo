@@ -4,13 +4,16 @@ import java.util.Date
 val bintrayUsername: String? by project
 val bintrayApiKey: String? by project
 
-val mongodbDriverReactivestreamsVersion: String by project
+val mongodbBsonVersion: String by project
 val kotlinxVersion: String by project
+val mongodbDriverReactivestreamsVersion: String by project
 val kotlinTestVersion: String by project
 val mockkVersion: String by project
+val flapdoodleVersion: String by project
+val mongodbDriverSyncVersion: String by project
 
 group = "com.sparetimedevs"
-version = "0.0.1-EXPERIMENTAL-sd8s2ak"
+version = "0.0.1-EXPERIMENTAL-uq3z0ks"
 
 plugins {
     `build-scan`
@@ -31,14 +34,17 @@ repositories {
 }
 
 dependencies {
-	api("org.mongodb:mongodb-driver-reactivestreams:$mongodbDriverReactivestreamsVersion")
-	
-	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinxVersion")
-	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:$kotlinxVersion")
+	api("org.mongodb:bson:$mongodbBsonVersion")
+
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinxVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:$kotlinxVersion")
+    implementation("org.mongodb:mongodb-driver-reactivestreams:$mongodbDriverReactivestreamsVersion")
+
     testImplementation("io.kotlintest:kotlintest-runner-junit5:$kotlinTestVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
+    testImplementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo:$flapdoodleVersion")
+    testImplementation("org.mongodb:mongodb-driver-sync:$mongodbDriverSyncVersion")
 }
 
 val sourcesJar by tasks.creating(Jar::class) {
