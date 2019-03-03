@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package com.sparetimedevs.suspendmongo
+package test.listener
 
-import com.mongodb.reactivestreams.client.MongoCollection
+import io.kotlintest.Description
 
-inline fun <reified T: Any> getCollection(database: Database): Collection<T> =
-		Collection(database, T::class.java.simpleName!!, T::class.java)
+object StartMongoDbListener : MongoDbListener() {
 
-class Collection<T: Any>(
-		private val database: Database,
-		private val collectionName: String,
-		private val clazz: Class<T>
-) {
-
-	internal fun getCollection(): MongoCollection<T> =
-			database.mongoDatabase.getCollection(collectionName, clazz)
+	override fun beforeTest(description: Description) {
+		when {
+			this.mongodProcess == null -> startMongoDb()
+			!this.mongodProcess!!.isProcessRunning -> startMongoDb()
+			else -> return
+		}
+	}
 }

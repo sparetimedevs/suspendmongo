@@ -14,19 +14,13 @@
  * limitations under the License.
  */
 
-package com.sparetimedevs.suspendmongo
+package com.sparetimedevs.suspendmongo.result
 
-import com.mongodb.reactivestreams.client.MongoCollection
+sealed class Error(open val message: String) {
 
-inline fun <reified T: Any> getCollection(database: Database): Collection<T> =
-		Collection(database, T::class.java.simpleName!!, T::class.java)
+	data class EntityNotFound(override val message: String = "Entity not found.") : Error(message)
 
-class Collection<T: Any>(
-		private val database: Database,
-		private val collectionName: String,
-		private val clazz: Class<T>
-) {
+	data class ServiceUnavailable(override val message: String = "The MongoDB is unavailable.") : Error(message)
 
-	internal fun getCollection(): MongoCollection<T> =
-			database.mongoDatabase.getCollection(collectionName, clazz)
+	data class UnknownError(override val message: String = "An unknown error occurred.") : Error(message)
 }
