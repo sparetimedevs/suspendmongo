@@ -21,4 +21,7 @@ import org.bson.conversions.Bson
 import org.bson.types.ObjectId
 
 @PublishedApi
-internal fun idFilterQuery(id: ObjectId): Bson = Filters.eq("_id", id)
+internal fun idQueryFilter(id: ObjectId): Bson = Filters.eq("_id", id)
+
+@PublishedApi
+internal fun equalsQueryFilter(pairedFieldNameAndValue: Pair<String, Any>): Bson = Filters.eq(pairedFieldNameAndValue.first, pairedFieldNameAndValue.second)

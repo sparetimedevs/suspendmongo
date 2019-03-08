@@ -2,19 +2,6 @@ import com.jfrog.bintray.gradle.BintrayExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Date
 
-val bintrayUsername: String? by project
-val bintrayApiKey: String? by project
-
-val mongodbBsonVersion: String by project
-val kotlinxVersion: String by project
-val mongodbDriverReactivestreamsVersion: String by project
-val kotlinTestVersion: String by project
-val mockkVersion: String by project
-val flapdoodleVersion: String by project
-val mongodbDriverSyncVersion: String by project
-val resilienceVersion: String by project
-
-
 group = "com.sparetimedevs"
 version = "0.0.1-EXPERIMENTAL-ydrg89"
 
@@ -26,10 +13,10 @@ plugins {
 }
 
 buildScan {
-    termsOfServiceUrl = "https://gradle.com/terms-of-service" 
+    termsOfServiceUrl = "https://gradle.com/terms-of-service"
     termsOfServiceAgree = "yes"
 
-    publishAlways() 
+    publishAlways()
 }
 
 repositories {
@@ -41,19 +28,49 @@ tasks.withType<KotlinCompile> {
 }
 
 dependencies {
-	api("org.mongodb:bson:$mongodbBsonVersion")
+    val mongoDbGroup = "org.mongodb"
+    val kotlinGroup = "org.jetbrains.kotlin"
+    val kotlinxGroup = "org.jetbrains.kotlinx"
+    val resilience4jGroup = "io.github.resilience4j"
+    val kotlinTestGroup = "io.kotlintest"
+    val mockkGroup = "io.mockk"
+    val flapdoodleGroup = "de.flapdoodle.embed"
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinxVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:$kotlinxVersion")
-    implementation("org.mongodb:mongodb-driver-reactivestreams:$mongodbDriverReactivestreamsVersion")
-    implementation("io.github.resilience4j:resilience4j-retry:$resilienceVersion")
-    implementation("io.github.resilience4j:resilience4j-bulkhead:$resilienceVersion")
+    val mongoDbBsonArtifact = "bson"
+    val kotlinStdLibJdk8Artifact = "kotlin-stdlib-jdk8"
+    val kotlinxCoroutinesCoreArtifact = "kotlinx-coroutines-core"
+    val kotlinxCoroutinesReactiveArtifact = "kotlinx-coroutines-reactive"
+    val mongoDbDriverReactiveStreamsArtifact = "mongodb-driver-reactivestreams"
+    val resilience4jRetryArtifact = "resilience4j-retry"
+    val resilience4jBulkheadArtifact = "resilience4j-bulkhead"
+    val kotlinTestRunnerJUnit5Artifact = "kotlintest-runner-junit5"
+    val mockkArtifact = "mockk"
+    val flapdoodleEmbedMongoArtifact = "de.flapdoodle.embed.mongo"
+    val mongoDbDriverSyncArtifact = "mongodb-driver-sync"
 
-    testImplementation("io.kotlintest:kotlintest-runner-junit5:$kotlinTestVersion")
-    testImplementation("io.mockk:mockk:$mockkVersion")
-    testImplementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo:$flapdoodleVersion")
-    testImplementation("org.mongodb:mongodb-driver-sync:$mongodbDriverSyncVersion")
+    val mongoDbBsonVersion: String by project
+    val kotlinStdLibJdk8Version: String by project
+    val kotlinxVersion: String by project
+    val mongodbDriverReactivestreamsVersion: String by project
+    val resilienceVersion: String by project
+    val kotlinTestVersion: String by project
+    val mockkVersion: String by project
+    val flapdoodleVersion: String by project
+    val mongoDbDriverSyncVersion: String by project
+
+    api(mongoDbGroup, mongoDbBsonArtifact, mongoDbBsonVersion)
+
+    implementation(kotlinGroup, kotlinStdLibJdk8Artifact, kotlinStdLibJdk8Version)
+    implementation(kotlinxGroup, kotlinxCoroutinesCoreArtifact, kotlinxVersion)
+    implementation(kotlinxGroup, kotlinxCoroutinesReactiveArtifact, kotlinxVersion)
+    implementation(mongoDbGroup, mongoDbDriverReactiveStreamsArtifact, mongodbDriverReactivestreamsVersion)
+    implementation(resilience4jGroup, resilience4jRetryArtifact, resilienceVersion)
+    implementation(resilience4jGroup, resilience4jBulkheadArtifact, resilienceVersion)
+
+    testImplementation(kotlinTestGroup, kotlinTestRunnerJUnit5Artifact, kotlinTestVersion)
+    testImplementation(mockkGroup, mockkArtifact, mockkVersion)
+    testImplementation(flapdoodleGroup, flapdoodleEmbedMongoArtifact, flapdoodleVersion)
+    testImplementation(mongoDbGroup, mongoDbDriverSyncArtifact, mongoDbDriverSyncVersion)
 }
 
 val sourcesJar by tasks.creating(Jar::class) {
@@ -81,6 +98,8 @@ publishing {
 }
 
 bintray {
+    val bintrayUsername: String? by project
+    val bintrayApiKey: String? by project
     user = bintrayUsername
     key = bintrayApiKey
     setPublications("default")

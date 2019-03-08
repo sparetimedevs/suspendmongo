@@ -20,51 +20,67 @@ import com.sparetimedevs.suspendmongo.result.Result.Failure
 import com.sparetimedevs.suspendmongo.result.Result.Success
 import io.kotlintest.fail
 import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotlintest.specs.BehaviorSpec
 
-internal class ResultTest : StringSpec({
+class ResultTest : BehaviorSpec({
 
-	"Given a string value when result is success then string value is accessible." {
-		val stringValue = "Hello world, I am a string."
+	given("a string value") {
+		`when`("result is success") {
+			then("string value is accessible.") {
+				val stringValue = "Hello world, I am a string."
 
-		val result: Result<Error, String> = Success(stringValue)
+				val result: Result<Error, String> = Success(stringValue)
 
-		result.fold(
-				{ fail("This test case should yield a Success.") },
-				{ it shouldBe stringValue }
-		)
+				result.fold(
+						{ fail("This test case should yield a Success.") },
+						{ it shouldBe stringValue }
+				)
+			}
+		}
 	}
 
-	"Given an entity not found error when result is failure then entity not found error is accessible." {
-		val errorMessage = "This is a test error message stating that the entity is not found."
+	given("an entity not found error") {
+		`when`("result is failure") {
+			then(" entity not found error is accessible.") {
+				val errorMessage = "This is a test error message stating that the entity is not found."
 
-		val result: Result<Error, String> = Failure(Error.EntityNotFound(errorMessage))
+				val result: Result<Error, String> = Failure(Error.EntityNotFound(errorMessage))
 
-		result.fold(
-				{ it shouldBe Error.EntityNotFound(errorMessage) },
-				{ fail("This test case should yield a Failure.") }
-		)
+				result.fold(
+						{ it shouldBe Error.EntityNotFound(errorMessage) },
+						{ fail("This test case should yield a Failure.") }
+				)
+			}
+		}
 	}
 
-	"Given a service unavailable error when result is failure then service unavailable error is accessible." {
-		val errorMessage = "This is a test error message stating that the service is unavailable."
+	given("a service unavailable error") {
+		`when`("result is failure") {
+			then("service unavailable error is accessible.") {
+				val errorMessage = "This is a test error message stating that the service is unavailable."
 
-		val result: Result<Error, String> = Failure(Error.ServiceUnavailable(errorMessage))
+				val result: Result<Error, String> = Failure(Error.ServiceUnavailable(errorMessage))
 
-		result.fold(
-				{ it shouldBe Error.ServiceUnavailable(errorMessage) },
-				{ fail("This test case should yield a Failure.") }
-		)
+				result.fold(
+						{ it shouldBe Error.ServiceUnavailable(errorMessage) },
+						{ fail("This test case should yield a Failure.") }
+				)
+			}
+		}
 	}
 
-	"Given an unknown error when result is failure then unknown error is accessible." {
-		val errorMessage = "This is a test error message stating that the error is unknown."
+	given("an unknown error") {
+		`when`("result is failure") {
+			then("unknown error is accessible.") {
+				val errorMessage = "This is a test error message stating that the error is unknown."
 
-		val result: Result<Error, String> = Failure(Error.UnknownError(errorMessage))
+				val result: Result<Error, String> = Failure(Error.UnknownError(errorMessage))
 
-		result.fold(
-				{ it shouldBe Error.UnknownError(errorMessage) },
-				{ fail("This test case should yield a Failure.") }
-		)
+				result.fold(
+						{ it shouldBe Error.UnknownError(errorMessage) },
+						{ fail("This test case should yield a Failure.") }
+				)
+			}
+		}
 	}
 })

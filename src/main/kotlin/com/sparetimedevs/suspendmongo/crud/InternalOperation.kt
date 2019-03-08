@@ -20,20 +20,20 @@ import com.mongodb.reactivestreams.client.Success.SUCCESS
 import com.sparetimedevs.suspendmongo.Collection
 import com.sparetimedevs.suspendmongo.result.Error
 import com.sparetimedevs.suspendmongo.result.Result
-import kotlinx.coroutines.reactive.awaitFirstOrNull
-import kotlinx.coroutines.reactive.consumeEach
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.single
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.reactive.flow.asFlow
 import org.bson.conversions.Bson
 import java.util.function.Supplier
 
-//TODO create better error messages.
-
+@FlowPreview
 @PublishedApi
 internal suspend fun <T: Any> createOneSuspendMongoResult(collection: Collection<T>, entity: T): Result<Error, T> {
     val resilience = collection.getDatabaseResilience()
-    val mongoCollection = collection.getCollection()
+    val mongoCollection = collection.getMongoCollection()
     return try {
-        val publisher = resilience.executeSupplier( Supplier { mongoCollection.insertOne(entity) })
-        val success = publisher.awaitFirstOrNull()
+        val success = resilience.executeSupplier( Supplier { mongoCollection.insertOne(entity) }).asFlow().single()
         when (success) {
             SUCCESS -> Result.Success(entity)
             else -> Result.Failure(Error.UnknownError())
@@ -43,79 +43,91 @@ internal suspend fun <T: Any> createOneSuspendMongoResult(collection: Collection
     }
 }
 
+@FlowPreview
 @PublishedApi
 internal suspend fun <T: Any> readOneSuspendMongoResult(collection: Collection<T>, filter: Bson): Result<Error, T> {
     val resilience = collection.getDatabaseResilience()
-    val mongoCollection = collection.getCollection()
+    val mongoCollection = collection.getMongoCollection()
     return try {
-        val resultEntity = resilience.executeSupplier( Supplier { mongoCollection.find(filter) }).awaitFirstOrNull()
-        when {
-            resultEntity != null -> Result.Success(resultEntity)
-            else -> Result.Failure(Error.EntityNotFound())
-        }
+        Result.Success(
+                resilience.executeSupplier( Supplier { mongoCollection.find(filter) }).asFlow().single()
+        )
+    } catch (e: NoSuchElementException) {
+        Result.Failure(Error.EntityNotFound())
+    } catch (e: IllegalStateException) {
+        Result.Failure(Error.UnknownError("Expected a single result, but found multiple results."))
     } catch (e: Exception) {
         Result.Failure(Error.UnknownError())
     }
 }
 
+@FlowPreview
 @PublishedApi
 internal suspend fun <T: Any> readAllSuspendMongoResult(collection: Collection<T>): Result<Error, List<T>> {
     val resilience = collection.getDatabaseResilience()
-    val mongoCollection = collection.getCollection()
+    val mongoCollection = collection.getMongoCollection()
     return try {
-        val list = arrayListOf<T>()
-	    //TODO change implementation to not use mutable ArrayList.
-        val documents = resilience.executeSupplier( Supplier { mongoCollection.find() })
-        documents.consumeEach { list.add(it) }
-	    Result.Success(list)
+        Result.Success(
+                resilience.executeSupplier( Supplier { mongoCollection.find() }).asFlow().toList()
+        )
     } catch (e: Exception) {
-	    Result.Failure(Error.UnknownError())
+        Result.Failure(Error.UnknownError())
     }
 }
 
+@FlowPreview
 @PublishedApi
 internal suspend fun <T: Any> updateOneSuspendMongoResult(collection: Collection<T>, filter: Bson, entity: T): Result<Error, T> {
     val resilience = collection.getDatabaseResilience()
-    val mongoCollection = collection.getCollection()
+    val mongoCollection = collection.getMongoCollection()
     return try {
-        val publisher = resilience.executeSupplier( Supplier { mongoCollection.findOneAndReplace(filter, entity) })
-        val resultEntity = publisher.awaitFirstOrNull()
-        when {
-            resultEntity != null -> Result.Success(resultEntity)
-            else -> Result.Failure(Error.EntityNotFound())
-        }
+        Result.Success(
+                resilience.executeSupplier( Supplier { mongoCollection.findOneAndReplace(filter, entity) }).asFlow().single()
+        )
     } catch (e: Exception) {
         Result.Failure(Error.UnknownError())
     }
 }
 
+@FlowPreview
 @PublishedApi
 internal suspend fun <T: Any> deleteOneSuspendMongoResult(collection: Collection<T>, filter: Bson): Result<Error, T> {
     val resilience = collection.getDatabaseResilience()
-    val mongoCollection = collection.getCollection()
+    val mongoCollection = collection.getMongoCollection()
     return try {
-        val publisher = resilience.executeSupplier( Supplier { mongoCollection.findOneAndDelete(filter) })
-        val resultEntity = publisher.awaitFirstOrNull()
-        when {
-            resultEntity != null -> Result.Success(resultEntity)
-            else -> Result.Failure(Error.EntityNotFound())
-        }
+        Result.Success(
+                resilience.executeSupplier( Supplier { mongoCollection.findOneAndDelete(filter) }).asFlow().single()
+        )
     } catch (e: Exception) {
         Result.Failure(Error.UnknownError())
     }
 }
 
+@FlowPreview
 @PublishedApi
 internal suspend fun <T: Any> deleteAllSuspendMongoResult(collection: Collection<T>): Result<Error, Boolean> {
     val resilience = collection.getDatabaseResilience()
-    val mongoCollection = collection.getCollection()
+    val mongoCollection = collection.getMongoCollection()
     return try {
-        val publisher = resilience.executeSupplier( Supplier { mongoCollection.drop() })
-        val success = publisher.awaitFirstOrNull()
+        val success = resilience.executeSupplier( Supplier { mongoCollection.drop() }).asFlow().single()
         when (success) {
             SUCCESS -> Result.Success(true)
             else -> Result.Failure(Error.EntityNotFound())
         }
+    } catch (e: Exception) {
+        Result.Failure(Error.UnknownError())
+    }
+}
+
+@FlowPreview
+@PublishedApi
+internal suspend fun <T: Any> countAllSuspendMongoResult(collection: Collection<T>): Result<Error, Long> {
+    val resilience = collection.getDatabaseResilience()
+    val mongoCollection = collection.getMongoCollection()
+    return try {
+        Result.Success(
+                resilience.executeSupplier( Supplier { mongoCollection.countDocuments() }).asFlow().single()
+        )
     } catch (e: Exception) {
         Result.Failure(Error.UnknownError())
     }

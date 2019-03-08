@@ -18,71 +18,169 @@ package example.repository
 
 import com.sparetimedevs.suspendmongo.Collection
 import com.sparetimedevs.suspendmongo.Database
+import com.sparetimedevs.suspendmongo.crud.countAllSuspendMongoResult
+import com.sparetimedevs.suspendmongo.crud.createOneSuspendMongoResult
+import com.sparetimedevs.suspendmongo.crud.deleteAllSuspendMongoResult
+import com.sparetimedevs.suspendmongo.crud.deleteOneSuspendMongoResult
 import com.sparetimedevs.suspendmongo.crud.readAllSuspendMongoResult
 import com.sparetimedevs.suspendmongo.crud.readOneSuspendMongoResult
+import com.sparetimedevs.suspendmongo.crud.updateOneSuspendMongoResult
 import com.sparetimedevs.suspendmongo.result.Result
+import com.sparetimedevs.suspendmongo.result.fold
 import example.model.TestUser
+import io.kotlintest.fail
 import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotlintest.specs.BehaviorSpec
 import io.mockk.coEvery
 import io.mockk.mockk
 import io.mockk.mockkStatic
-import kotlinx.coroutines.runBlocking
 
-internal class TestUserRepositoryTest : StringSpec({
+class TestUserRepositoryTest : BehaviorSpec({
 
-	"read all" {
-		runBlocking {
-			val mockDatabase = mockk<Database>()
-			mockkStatic("com.sparetimedevs.suspendmongo.crud.InternalOperationKt")
+	given("a test user in the test user collection") {
+		`when`("read one by id") {
+			then("returns that test user.") {
+				val mockDatabase = mockk<Database>()
+				mockkStatic("com.sparetimedevs.suspendmongo.crud.InternalOperationKt")
 
-			val listOfUsersInMongo = arrayListOf(
-					TestUser(firstName = "a", lastName = "b", age = 31, email = "c"),
-					TestUser(firstName = "d", lastName = "e", age = 29, email = "f")
-			)
-			val returnedSuspendMongoResult = Result.Success(listOfUsersInMongo)
+				val testUser = TestUser(firstName = "a", lastName = "b", age = 31, email = "c")
 
-			coEvery { readAllSuspendMongoResult(any<Collection<TestUser>>()) } returns returnedSuspendMongoResult
+				coEvery { readOneSuspendMongoResult(any<Collection<TestUser>>(), any()) } returns Result.Success(testUser)
 
-			val userRepository = TestUserRepository(mockDatabase)
+				val userRepository = TestUserRepository(mockDatabase)
 
-			val listOfUsersInSuspendMongoResult = userRepository.readAll()
+				val resultContainingTestUser = userRepository.readOne(testUser.id)
 
-			listOfUsersInSuspendMongoResult shouldBe returnedSuspendMongoResult
+				resultContainingTestUser.fold(
+						{ fail("This test case should yield a Success.") },
+						{ it shouldBe testUser }
+				)
+			}
+		}
+
+		`when`("delete one") {
+			then("deletes that test user.") {
+				val mockDatabase = mockk<Database>()
+				mockkStatic("com.sparetimedevs.suspendmongo.crud.InternalOperationKt")
+
+				val testUser = TestUser(firstName = "a", lastName = "b", age = 31, email = "c")
+
+				coEvery { deleteOneSuspendMongoResult(any<Collection<TestUser>>(), any()) } returns Result.Success(testUser)
+
+				val userRepository = TestUserRepository(mockDatabase)
+
+				val resultContainingTestUser = userRepository.deleteOne(testUser.id)
+
+				resultContainingTestUser.fold(
+						{ fail("This test case should yield a Success.") },
+						{ it shouldBe testUser }
+				)
+			}
+		}
+
+		`when`("update one") {
+			then("updates that test user.") {
+				val mockDatabase = mockk<Database>()
+				mockkStatic("com.sparetimedevs.suspendmongo.crud.InternalOperationKt")
+
+				val testUser = TestUser(firstName = "a", lastName = "b", age = 31, email = "c")
+
+				coEvery { updateOneSuspendMongoResult(any<Collection<TestUser>>(), any(), any()) } returns Result.Success(testUser)
+
+				val userRepository = TestUserRepository(mockDatabase)
+
+				val resultContainingTestUser = userRepository.updateOne(testUser.id, testUser)
+
+				resultContainingTestUser.fold(
+						{ fail("This test case should yield a Success.") },
+						{ it shouldBe testUser }
+				)
+			}
 		}
 	}
 
-	"read one" {
-		runBlocking {
-			val mockDatabase = mockk<Database>()
-			mockkStatic("com.sparetimedevs.suspendmongo.crud.InternalOperationKt")
+	given("multiple test users in the test user collection") {
+		`when`("read all") {
+			then("returns all test users.") {
+				val mockDatabase = mockk<Database>()
+				mockkStatic("com.sparetimedevs.suspendmongo.crud.InternalOperationKt")
 
-			val user = TestUser(firstName = "a", lastName = "b", age = 31, email = "c")
-			val returnedSuspendMongoResult = Result.Success(user)
+				val listOfTestUsersInMongo = arrayListOf(
+						TestUser(firstName = "a", lastName = "b", age = 31, email = "c"),
+						TestUser(firstName = "d", lastName = "e", age = 29, email = "f")
+				)
 
-			coEvery { readOneSuspendMongoResult(any<Collection<TestUser>>(), any()) } returns returnedSuspendMongoResult
+				coEvery { readAllSuspendMongoResult(any<Collection<TestUser>>()) } returns Result.Success(listOfTestUsersInMongo)
 
-			val userRepository = TestUserRepository(mockDatabase)
+				val userRepository = TestUserRepository(mockDatabase)
 
-			val userInSuspendMongoResult = userRepository.readOne(user.id)
+				val resultContainingListOfTestUsers = userRepository.readAll()
 
-			userInSuspendMongoResult shouldBe returnedSuspendMongoResult
+				resultContainingListOfTestUsers.fold(
+						{ fail("This test case should yield a Success.") },
+						{ it shouldBe listOfTestUsersInMongo }
+				)
+			}
+		}
+
+		`when`("delete all") {
+			then("deletes all test users.") {
+				val mockDatabase = mockk<Database>()
+				mockkStatic("com.sparetimedevs.suspendmongo.crud.InternalOperationKt")
+
+				coEvery { deleteAllSuspendMongoResult(any<Collection<TestUser>>()) } returns Result.Success(true)
+
+				val userRepository = TestUserRepository(mockDatabase)
+
+				val resultContainingTrue = userRepository.deleteAll()
+
+				resultContainingTrue.fold(
+						{ fail("This test case should yield a Success.") },
+						{ it shouldBe true }
+				)
+			}
+		}
+
+		`when`("count all") {
+			then("counts all test users.") {
+				val mockDatabase = mockk<Database>()
+				mockkStatic("com.sparetimedevs.suspendmongo.crud.InternalOperationKt")
+
+				val count = 444L
+
+				coEvery { countAllSuspendMongoResult(any<Collection<TestUser>>()) } returns Result.Success(count)
+
+				val userRepository = TestUserRepository(mockDatabase)
+
+				val resultContainingCount = userRepository.countAll()
+
+				resultContainingCount.fold(
+						{ fail("This test case should yield a Success.") },
+						{ it shouldBe count }
+				)
+			}
 		}
 	}
 
-	"delete all" {
-		true shouldBe true
-	}
+	given("a test user collection") {
+		`when`("create one") {
+			then("creates a test user in the test user collection.") {
+				val mockDatabase = mockk<Database>()
+				mockkStatic("com.sparetimedevs.suspendmongo.crud.InternalOperationKt")
 
-	"delete one" {
-		true shouldBe true
-	}
+				val testUser = TestUser(firstName = "a", lastName = "b", age = 31, email = "c")
 
-	"create one" {
-		true shouldBe true
-	}
+				coEvery { createOneSuspendMongoResult(any<Collection<TestUser>>(), any()) } returns Result.Success(testUser)
 
-	"update one" {
-		true shouldBe true
+				val userRepository = TestUserRepository(mockDatabase)
+
+				val resultContainingTestUser = userRepository.createOne(testUser)
+
+				resultContainingTestUser.fold(
+						{ fail("This test case should yield a Success.") },
+						{ it shouldBe testUser }
+				)
+			}
+		}
 	}
 })

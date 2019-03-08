@@ -17,37 +17,88 @@
 package integrationtest.crud
 
 import com.sparetimedevs.suspendmongo.Database
+import com.sparetimedevs.suspendmongo.resilience.Resilience
 import com.sparetimedevs.suspendmongo.result.fold
 import example.model.TestUser
 import example.repository.TestUserRepository
+import io.kotlintest.IsolationMode
 import io.kotlintest.extensions.TestListener
 import io.kotlintest.fail
 import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
-import kotlinx.coroutines.runBlocking
+import io.kotlintest.specs.BehaviorSpec
 import test.listener.StartMongoDbListener
 import test.listener.connectionString
 
-internal class OperationIT : StringSpec() {
+class OperationIT : BehaviorSpec() {
 
-	override fun isInstancePerTest(): Boolean = true
+	override fun isolationMode(): IsolationMode = IsolationMode.InstancePerTest
 	override fun listeners(): List<TestListener> = listOf(StartMongoDbListener)
 
 	init {
+		val resilience = Resilience(30, 500, 1)
+		val database = Database(connectionString, "test-database", resilience)
+		val testUserRepository = TestUserRepository(database)
 
-		"Given a document in the MongoDB when read one then retrieves that document." {
-			val database = Database(connectionString, "test-database")
-			val testUserRepository = TestUserRepository(database)
-			val testUser = TestUser(firstName = "a", lastName = "b", age = 31, email = "c")
-			runBlocking {
-				testUserRepository.createOne(testUser)
+		given("a document in the MongoDB") {
+			`when`("read one by id") {
+				then("retrieves that document.") {
+					val testUser = TestUser(firstName = "a", lastName = "b", age = 31, email = "c")
 
-				val resultContainingTestUser = testUserRepository.readOne(testUser.id)
+					testUserRepository.createOne(testUser)
 
-				resultContainingTestUser.fold(
-						{ fail("This test case should yield a Success.") },
-						{ it shouldBe testUser }
-				)
+					val resultContainingTestUser = testUserRepository.readOne(testUser.id)
+
+					resultContainingTestUser.fold(
+							{ fail("This test case should yield a Success.") },
+							{ it shouldBe testUser }
+					)
+				}
+			}
+
+			`when`("read one by first name and last name") {
+				then("retrieves that document.") {
+					val testUser = TestUser(firstName = "d", lastName = "e", age = 29, email = "f")
+
+					testUserRepository.createOne(testUser)
+
+					val resultContainingTestUser = testUserRepository.readOne(
+							"firstName" to testUser.firstName,
+							"lastName" to testUser.lastName
+					)
+
+					resultContainingTestUser.fold(
+							{ fail("This test case should yield a Success.") },
+							{ it shouldBe testUser }
+					)
+				}
+			}
+		}
+
+		given("four documents in the MongoDB") {
+			`when`("count all") {
+				then("counts all documents.") {
+					testUserRepository.deleteAll()
+
+					val testUser1 = TestUser(firstName = "a", lastName = "b", age = 31, email = "c")
+					val testUser2 = TestUser(firstName = "d", lastName = "e", age = 29, email = "f")
+					val testUser3 = TestUser(firstName = "g", lastName = "h", age = 27, email = "i")
+					val testUser4 = TestUser(firstName = "j", lastName = "k", age = 25, email = "l")
+
+
+					testUserRepository.createOne(testUser1)
+					testUserRepository.createOne(testUser2)
+					testUserRepository.createOne(testUser3)
+					testUserRepository.createOne(testUser4)
+
+					val count = 4L
+
+					val resultContainingCount = testUserRepository.countAll()
+
+					resultContainingCount.fold(
+							{ fail("This test case should yield a Success.") },
+							{ it shouldBe count }
+					)
+				}
 			}
 		}
 	}
