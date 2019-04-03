@@ -1,4 +1,5 @@
 import com.jfrog.bintray.gradle.BintrayExtension
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Date
 
 val bintrayUsername: String? by project
@@ -11,14 +12,16 @@ val kotlinTestVersion: String by project
 val mockkVersion: String by project
 val flapdoodleVersion: String by project
 val mongodbDriverSyncVersion: String by project
+val resilienceVersion: String by project
+
 
 group = "com.sparetimedevs"
-version = "0.0.1-EXPERIMENTAL-uq3z0ks"
+version = "0.0.1-EXPERIMENTAL-ydrg89"
 
 plugins {
     `build-scan`
     `maven-publish`
-    id("org.jetbrains.kotlin.jvm") version "1.3.20"
+    id("org.jetbrains.kotlin.jvm") version "1.3.21"
     id("com.jfrog.bintray") version "1.8.4"
 }
 
@@ -33,6 +36,10 @@ repositories {
     jcenter()
 }
 
+tasks.withType<KotlinCompile> {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
 dependencies {
 	api("org.mongodb:bson:$mongodbBsonVersion")
 
@@ -40,6 +47,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinxVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:$kotlinxVersion")
     implementation("org.mongodb:mongodb-driver-reactivestreams:$mongodbDriverReactivestreamsVersion")
+    implementation("io.github.resilience4j:resilience4j-retry:$resilienceVersion")
+    implementation("io.github.resilience4j:resilience4j-bulkhead:$resilienceVersion")
 
     testImplementation("io.kotlintest:kotlintest-runner-junit5:$kotlinTestVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
