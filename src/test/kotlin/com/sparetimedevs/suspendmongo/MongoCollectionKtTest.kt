@@ -19,37 +19,57 @@ package com.sparetimedevs.suspendmongo
 import com.mongodb.reactivestreams.client.MongoCollection
 import com.mongodb.reactivestreams.client.MongoDatabase
 import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotlintest.specs.BehaviorSpec
 import io.mockk.every
 import io.mockk.mockk
 import org.bson.types.ObjectId
 
-internal class MongoCollectionKtTest : StringSpec({
+class MongoCollectionKtTest : BehaviorSpec({
 
-	"Given ... when ... then ..." {
-		val mockDatabase = mockk<Database>()
+	given("a specific type of an object") {
+		`when`("get collection") {
+			then("returns a collection with that type.") {
+				val mockDatabase = mockk<Database>()
 
-		val collection = getCollection<TestType>(mockDatabase)
+				val collection = getCollection<TestObject>(mockDatabase)
 
-		(collection is Collection<TestType>) shouldBe true
+				(collection is Collection<TestObject>) shouldBe true
+			}
+		}
+
+		and("a collection name") {
+			`when`("get collection") {
+				then("returns a collection with that type.") {
+					val collectionName = "a test collection name"
+					val mockDatabase = mockk<Database>()
+
+					val collection = getCollection<TestObject>(mockDatabase, collectionName)
+
+					(collection is Collection<TestObject>) shouldBe true
+				}
+			}
+		}
 	}
 
-	"Given ... when ... then ... something else" {
-		val collectionName = TestType::class.java.simpleName!!
-		val clazz = TestType::class.java
+	given("a collection of a specific type of an object") {
+		`when`("get mongo collection") {
+			then("returns a mongo collection with that type.") {
+				val collectionName = TestObject::class.java.simpleName!!
+				val clazz = TestObject::class.java
 
-		val mockDatabase = mockk<Database>()
-		val mockMongoDatabase = mockk<MongoDatabase>()
-		val mockCollection = mockk<MongoCollection<TestType>>()
+				val mockDatabase = mockk<Database>()
+				val mockMongoDatabase = mockk<MongoDatabase>()
+				val mockCollection = mockk<MongoCollection<TestObject>>()
 
-		every { mockDatabase.mongoDatabase } returns mockMongoDatabase
-		every { mockMongoDatabase.getCollection(collectionName, clazz) } returns mockCollection
+				every { mockDatabase.mongoDatabase } returns mockMongoDatabase
+				every { mockMongoDatabase.getCollection(collectionName, clazz) } returns mockCollection
 
-		val collection = Collection(mockDatabase, collectionName, clazz).getCollection()
+				val collection = Collection(mockDatabase, collectionName, clazz).getMongoCollection()
 
-		collection shouldBe mockCollection
+				collection shouldBe mockCollection
+			}
+		}
 	}
-
 })
 
-data class TestType(val id: ObjectId = ObjectId(), val a: String, val b: Int)
+data class TestObject(val id: ObjectId = ObjectId(), val a: String, val b: Int)

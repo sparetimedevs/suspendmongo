@@ -17,49 +17,82 @@
 package com.sparetimedevs.suspendmongo.crud
 
 import com.sparetimedevs.suspendmongo.Collection
-import com.sparetimedevs.suspendmongo.TestType
+import com.sparetimedevs.suspendmongo.TestObject
 import com.sparetimedevs.suspendmongo.result.Result
+import com.sparetimedevs.suspendmongo.result.fold
+import io.kotlintest.fail
 import io.kotlintest.shouldBe
-import io.kotlintest.specs.StringSpec
+import io.kotlintest.specs.BehaviorSpec
 import io.mockk.coEvery
 import io.mockk.mockk
 import io.mockk.mockkStatic
-import kotlinx.coroutines.runBlocking
 
-internal class OperationKtTest : StringSpec({
+class OperationKtTest : BehaviorSpec({
 
-	"read all" {
-		runBlocking {
-			val mockCollection = mockk<Collection<TestType>>()
-			mockkStatic("com.sparetimedevs.suspendmongo.crud.InternalOperationKt")
+	val mockCollection = mockk<Collection<TestObject>>()
+	mockkStatic("com.sparetimedevs.suspendmongo.crud.InternalOperationKt")
 
-			val listOfTestTypesInMongo = arrayListOf(
-					TestType(a = "a", b = 2),
-					TestType(a = "d", b = 4)
-			)
-			val returnedSuspendMongoResult = Result.Success(listOfTestTypesInMongo)
+	given("an object in the collection") {
+		`when`("read one by id") {
+			then("returns that object.") {
+				val testObject = TestObject(a = "a", b = 2)
+				val returnedSuspendMongoResult = Result.Success(testObject)
 
-			coEvery { readAllSuspendMongoResult(any<Collection<TestType>>()) } returns returnedSuspendMongoResult
+				coEvery { readOneSuspendMongoResult(any<Collection<TestObject>>(), any()) } returns returnedSuspendMongoResult
 
-			val listOfTestTypesInSuspendMongoResult = mockCollection.readAll()
+				val testTypeInResult = mockCollection.readOne(testObject.id)
 
-			listOfTestTypesInSuspendMongoResult shouldBe returnedSuspendMongoResult
+				testTypeInResult shouldBe returnedSuspendMongoResult
+			}
+		}
+
+		`when`("read one by pairs of field names and values") {
+			then("returns that object.") {
+				val testType = TestObject(a = "a", b = 2)
+				val returnedSuspendMongoResult = Result.Success(testType)
+
+				coEvery { readOneSuspendMongoResult(any<Collection<TestObject>>(), any()) } returns returnedSuspendMongoResult
+
+				val testTypeInResult = mockCollection.readOne(
+						"a" to testType.a,
+						"b" to testType.b
+				)
+
+				testTypeInResult shouldBe returnedSuspendMongoResult
+			}
 		}
 	}
 
-	"read one" {
-		runBlocking {
-			val mockCollection = mockk<Collection<TestType>>()
-			mockkStatic("com.sparetimedevs.suspendmongo.crud.InternalOperationKt")
+	given("multiple objects in the collection") {
+		`when`("read all") {
+			then("returns all objects.") {
+				val listOfTestTypesInMongo = arrayListOf(
+						TestObject(a = "a", b = 2),
+						TestObject(a = "d", b = 4)
+				)
+				val returnedSuspendMongoResult = Result.Success(listOfTestTypesInMongo)
 
-			val testType = TestType(a = "a", b = 2)
-			val returnedSuspendMongoResult = Result.Success(testType)
+				coEvery { readAllSuspendMongoResult(any<Collection<TestObject>>()) } returns returnedSuspendMongoResult
 
-			coEvery { readOneSuspendMongoResult(any<Collection<TestType>>(), any()) } returns returnedSuspendMongoResult
+				val listOfTestTypesInResult = mockCollection.readAll()
 
-			val testTypeInSuspendMongoResult = mockCollection.readOne(testType.id)
+				listOfTestTypesInResult shouldBe returnedSuspendMongoResult
+			}
+		}
 
-			testTypeInSuspendMongoResult shouldBe returnedSuspendMongoResult
+		`when`("count all") {
+			then("returns the amount of all objects in the collection.") {
+				val count = 789L
+
+				coEvery { countAllSuspendMongoResult(any<Collection<TestObject>>()) } returns Result.Success(count)
+
+				val countOfTestTypesInResult = mockCollection.countAll()
+
+				countOfTestTypesInResult.fold(
+						{ fail("This test case should yield a Success.") },
+						{ it shouldBe count }
+				)
+			}
 		}
 	}
 })

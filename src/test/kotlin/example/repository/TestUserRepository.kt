@@ -17,6 +17,7 @@
 package example.repository
 
 import com.sparetimedevs.suspendmongo.Database
+import com.sparetimedevs.suspendmongo.crud.countAll
 import com.sparetimedevs.suspendmongo.crud.createOne
 import com.sparetimedevs.suspendmongo.crud.deleteAll
 import com.sparetimedevs.suspendmongo.crud.deleteOne
@@ -24,6 +25,8 @@ import com.sparetimedevs.suspendmongo.crud.readAll
 import com.sparetimedevs.suspendmongo.crud.readOne
 import com.sparetimedevs.suspendmongo.crud.updateOne
 import com.sparetimedevs.suspendmongo.getCollection
+import com.sparetimedevs.suspendmongo.result.Error
+import com.sparetimedevs.suspendmongo.result.Result
 import example.model.TestUser
 import org.bson.types.ObjectId
 
@@ -35,6 +38,8 @@ class TestUserRepository(database: Database) {
 
 	suspend fun readOne(id: ObjectId) = collection.readOne(id)
 
+	suspend fun readOne(vararg pairsOfFieldNamesAndValues: Pair<String, Any>): Result<Error, TestUser> = collection.readOne(*pairsOfFieldNamesAndValues)
+
 	suspend fun readAll() = collection.readAll()
 
 	suspend fun updateOne(id: ObjectId, testUser: TestUser) = collection.updateOne(id, testUser)
@@ -42,4 +47,6 @@ class TestUserRepository(database: Database) {
 	suspend fun deleteOne(id: ObjectId) = collection.deleteOne(id)
 
 	suspend fun deleteAll() = collection.deleteAll()
+
+	suspend fun countAll() = collection.countAll()
 }
