@@ -17,6 +17,7 @@
 package com.sparetimedevs.suspendmongo
 
 import com.mongodb.reactivestreams.client.MongoCollection
+import com.sparetimedevs.suspendmongo.resilience.Resilience
 
 inline fun <reified T: Any> getCollection(database: Database): Collection<T> =
 		Collection(database, T::class.java.simpleName!!, T::class.java)
@@ -26,6 +27,8 @@ class Collection<T: Any>(
 		private val collectionName: String,
 		private val clazz: Class<T>
 ) {
+
+	internal fun getDatabaseResilience(): Resilience = database.resilience
 
 	internal fun getCollection(): MongoCollection<T> =
 			database.mongoDatabase.getCollection(collectionName, clazz)

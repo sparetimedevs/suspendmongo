@@ -20,10 +20,11 @@ import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings
 import com.mongodb.reactivestreams.client.MongoClients
 import com.mongodb.reactivestreams.client.MongoDatabase
+import com.sparetimedevs.suspendmongo.resilience.Resilience
 import org.bson.codecs.configuration.CodecRegistries
 import org.bson.codecs.pojo.PojoCodecProvider
 
-class Database(connectionString: String, name: String) {
+class Database(connectionString: String, name: String, val resilience: Resilience = Resilience()) {
 
 	val mongoDatabase: MongoDatabase
 
