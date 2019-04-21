@@ -18,23 +18,44 @@ package com.sparetimedevs.suspendmongo
 
 import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings
+import com.mongodb.connection.netty.NettyStreamFactoryFactory
 import com.mongodb.reactivestreams.client.MongoClients
 import com.mongodb.reactivestreams.client.MongoDatabase
 import com.sparetimedevs.suspendmongo.resilience.Resilience
+import io.netty.channel.EventLoopGroup
 import org.bson.codecs.configuration.CodecRegistries
 import org.bson.codecs.pojo.PojoCodecProvider
 
-class Database(connectionString: String, name: String, val resilience: Resilience = Resilience()) {
+/**
+ * When using an EventLoopGroup, be sure to shut it down (gracefully).
+ **/
+class Database(connectionString: String, name: String, internal val resilience: Resilience = Resilience(), eventLoopGroup: EventLoopGroup? = null) {
 
-	val mongoDatabase: MongoDatabase
+	internal val mongoDatabase: MongoDatabase
 
 	init {
 		val pojoCodecRegistry = CodecRegistries.fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
 				CodecRegistries.fromProviders(PojoCodecProvider.builder().automatic(true).build()))
-		val settings = MongoClientSettings.builder()
-				.applyConnectionString(ConnectionString(connectionString))
-				.codecRegistry(pojoCodecRegistry)
-				.build()
+		val settings: MongoClientSettings = when (eventLoopGroup) {
+			null -> {
+				MongoClientSettings.builder()
+						.applyConnectionString(ConnectionString(connectionString))
+						.codecRegistry(pojoCodecRegistry)
+						.build()
+			}
+			else -> {
+				MongoClientSettings.builder()
+						.applyConnectionString(ConnectionString(connectionString))
+						.codecRegistry(pojoCodecRegistry)
+						.streamFactoryFactory(
+								NettyStreamFactoryFactory
+										.builder()
+										.eventLoopGroup(eventLoopGroup)
+										.build()
+						)
+						.build()
+			}
+		}
 		val client = MongoClients.create(settings)
 		mongoDatabase = client.getDatabase(name)
 	}

@@ -19,26 +19,27 @@ package integrationtest.mongodb
 import integrationtest.mongodb.driver.MongodbDriver
 import integrationtest.mongodb.driver.ReactiveStreamsMongodbDriver
 import integrationtest.mongodb.driver.SyncMongodbDriver
-import io.kotlintest.IsolationMode
 import io.kotlintest.extensions.TestListener
 import io.kotlintest.matchers.collections.shouldContainAll
 import io.kotlintest.matchers.numerics.shouldBeLessThan
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.BehaviorSpec
 import org.bson.Document
-import test.listener.StartMongoDbListener
-import test.listener.connectionString
+import test.listener.StartTestContainersListener
 
 class MongodbDriverComparisonIT : BehaviorSpec() {
 
-	override fun isolationMode(): IsolationMode = IsolationMode.InstancePerTest
-	override fun listeners(): List<TestListener> = listOf(StartMongoDbListener)
+	override fun listeners(): List<TestListener> = listOf(StartTestContainersListener)
 
 	init {
 
 		given("five inserts at one moment") {
 			`when`("testing mongodb reactive streams driver and mongodb sync driver") {
 				then("reactive streams driver is faster.") {
+					val ipAddressViaToxiproxy: String? = StartTestContainersListener.getMongoDbProxy().containerIpAddress
+					val portViaToxiproxy: Int? = StartTestContainersListener.getMongoDbProxy().proxyPort
+					val connectionString = "mongodb://$ipAddressViaToxiproxy:$portViaToxiproxy"
+
 					val reactiveStreamsMongodbDriver = ReactiveStreamsMongodbDriver(connectionString, "test-database-1")
 					val syncMongodbDriver = SyncMongodbDriver(connectionString, "test-database-2")
 
@@ -59,6 +60,9 @@ class MongodbDriverComparisonIT : BehaviorSpec() {
 		given("two hundred and fifty inserts at one moment") {
 			`when`("testing mongodb reactive streams driver and mongodb sync driver") {
 				then("reactive streams driver is faster.") {
+					val ipAddressViaToxiproxy: String? = StartTestContainersListener.getMongoDbProxy().containerIpAddress
+					val portViaToxiproxy: Int? = StartTestContainersListener.getMongoDbProxy().proxyPort
+					val connectionString = "mongodb://$ipAddressViaToxiproxy:$portViaToxiproxy"
 
 					val reactiveStreamsMongodbDriver = ReactiveStreamsMongodbDriver(connectionString, "test-database-3")
 					val syncMongodbDriver = SyncMongodbDriver(connectionString, "test-database-4")

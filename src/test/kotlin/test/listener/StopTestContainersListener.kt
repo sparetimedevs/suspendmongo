@@ -16,9 +16,10 @@
 
 package test.listener
 
-object StopMongoDbListener : MongoDbListener() {
+object StopTestContainersListener : TestContainersListener() {
 
 	override fun afterProject() {
-		stopMongoDb()
+		super.afterProject()
+		stopTestContainers()
 	}
 }

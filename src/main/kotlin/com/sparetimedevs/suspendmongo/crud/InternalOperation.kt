@@ -20,12 +20,14 @@ import com.mongodb.reactivestreams.client.Success.SUCCESS
 import com.sparetimedevs.suspendmongo.Collection
 import com.sparetimedevs.suspendmongo.result.Error
 import com.sparetimedevs.suspendmongo.result.Result
+import io.github.resilience4j.bulkhead.operator.BulkheadOperator
+import io.github.resilience4j.retry.transformer.RetryTransformer
+import io.reactivex.Flowable
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.flow.asFlow
 import org.bson.conversions.Bson
-import java.util.function.Supplier
 
 @FlowPreview
 @PublishedApi
@@ -33,13 +35,18 @@ internal suspend fun <T: Any> createOneSuspendMongoResult(collection: Collection
     val resilience = collection.getDatabaseResilience()
     val mongoCollection = collection.getMongoCollection()
     return try {
-        val success = resilience.executeSupplier( Supplier { mongoCollection.insertOne(entity) }).asFlow().single()
-        when (success) {
+        when (
+            Flowable.fromPublisher(mongoCollection.insertOne(entity))
+                    .compose(RetryTransformer.of(resilience.retry))
+                    .lift(BulkheadOperator.of(resilience.bulkhead))
+                    .asFlow()
+                    .single()
+            ) {
             SUCCESS -> Result.Success(entity)
             else -> Result.Failure(Error.UnknownError())
         }
     } catch (e: Exception) {
-        Result.Failure(Error.UnknownError())
+        Result.Failure(Error.UnknownError("The message of the exception: ${e.message}"))
     }
 }
 
@@ -50,14 +57,18 @@ internal suspend fun <T: Any> readOneSuspendMongoResult(collection: Collection<T
     val mongoCollection = collection.getMongoCollection()
     return try {
         Result.Success(
-                resilience.executeSupplier( Supplier { mongoCollection.find(filter) }).asFlow().single()
+                Flowable.fromPublisher(mongoCollection.find(filter))
+                        .compose(RetryTransformer.of(resilience.retry))
+                        .lift(BulkheadOperator.of(resilience.bulkhead))
+                        .asFlow()
+                        .single()
         )
     } catch (e: NoSuchElementException) {
         Result.Failure(Error.EntityNotFound())
     } catch (e: IllegalStateException) {
         Result.Failure(Error.UnknownError("Expected a single result, but found multiple results."))
     } catch (e: Exception) {
-        Result.Failure(Error.UnknownError())
+        Result.Failure(Error.UnknownError("The message of the exception: ${e.message}"))
     }
 }
 
@@ -68,10 +79,32 @@ internal suspend fun <T: Any> readAllSuspendMongoResult(collection: Collection<T
     val mongoCollection = collection.getMongoCollection()
     return try {
         Result.Success(
-                resilience.executeSupplier( Supplier { mongoCollection.find() }).asFlow().toList()
+                Flowable.fromPublisher(mongoCollection.find())
+                        .compose(RetryTransformer.of(resilience.retry))
+                        .lift(BulkheadOperator.of(resilience.bulkhead))
+                        .asFlow()
+                        .toList()
         )
     } catch (e: Exception) {
-        Result.Failure(Error.UnknownError())
+        Result.Failure(Error.UnknownError("The message of the exception: ${e.message}"))
+    }
+}
+
+@FlowPreview
+@PublishedApi
+internal suspend fun <T: Any> readAllSuspendMongoResult(collection: Collection<T>, sort: Bson): Result<Error, List<T>> {
+    val resilience = collection.getDatabaseResilience()
+    val mongoCollection = collection.getMongoCollection()
+    return try {
+        Result.Success(
+                Flowable.fromPublisher(mongoCollection.find().sort(sort))
+                        .compose(RetryTransformer.of(resilience.retry))
+                        .lift(BulkheadOperator.of(resilience.bulkhead))
+                        .asFlow()
+                        .toList()
+        )
+    } catch (e: Exception) {
+        Result.Failure(Error.UnknownError("The message of the exception: ${e.message}"))
     }
 }
 
@@ -82,10 +115,14 @@ internal suspend fun <T: Any> updateOneSuspendMongoResult(collection: Collection
     val mongoCollection = collection.getMongoCollection()
     return try {
         Result.Success(
-                resilience.executeSupplier( Supplier { mongoCollection.findOneAndReplace(filter, entity) }).asFlow().single()
+                Flowable.fromPublisher(mongoCollection.findOneAndReplace(filter, entity))
+                        .compose(RetryTransformer.of(resilience.retry))
+                        .lift(BulkheadOperator.of(resilience.bulkhead))
+                        .asFlow()
+                        .single()
         )
     } catch (e: Exception) {
-        Result.Failure(Error.UnknownError())
+        Result.Failure(Error.UnknownError("The message of the exception: ${e.message}"))
     }
 }
 
@@ -96,7 +133,11 @@ internal suspend fun <T: Any> deleteOneSuspendMongoResult(collection: Collection
     val mongoCollection = collection.getMongoCollection()
     return try {
         Result.Success(
-                resilience.executeSupplier( Supplier { mongoCollection.findOneAndDelete(filter) }).asFlow().single()
+                Flowable.fromPublisher(mongoCollection.findOneAndDelete(filter))
+                        .compose(RetryTransformer.of(resilience.retry))
+                        .lift(BulkheadOperator.of(resilience.bulkhead))
+                        .asFlow()
+                        .single()
         )
     } catch (e: Exception) {
         Result.Failure(Error.UnknownError())
@@ -109,13 +150,18 @@ internal suspend fun <T: Any> deleteAllSuspendMongoResult(collection: Collection
     val resilience = collection.getDatabaseResilience()
     val mongoCollection = collection.getMongoCollection()
     return try {
-        val success = resilience.executeSupplier( Supplier { mongoCollection.drop() }).asFlow().single()
-        when (success) {
+        when (
+            Flowable.fromPublisher(mongoCollection.drop())
+                .compose(RetryTransformer.of(resilience.retry))
+                .lift(BulkheadOperator.of(resilience.bulkhead))
+                .asFlow()
+                .single()
+            ) {
             SUCCESS -> Result.Success(true)
             else -> Result.Failure(Error.EntityNotFound())
         }
     } catch (e: Exception) {
-        Result.Failure(Error.UnknownError())
+        Result.Failure(Error.UnknownError("The message of the exception: ${e.message}"))
     }
 }
 
@@ -126,9 +172,13 @@ internal suspend fun <T: Any> countAllSuspendMongoResult(collection: Collection<
     val mongoCollection = collection.getMongoCollection()
     return try {
         Result.Success(
-                resilience.executeSupplier( Supplier { mongoCollection.countDocuments() }).asFlow().single()
+                Flowable.fromPublisher(mongoCollection.countDocuments())
+                        .compose(RetryTransformer.of(resilience.retry))
+                        .lift(BulkheadOperator.of(resilience.bulkhead))
+                        .asFlow()
+                        .single()
         )
     } catch (e: Exception) {
-        Result.Failure(Error.UnknownError())
+        Result.Failure(Error.UnknownError("The message of the exception: ${e.message}"))
     }
 }

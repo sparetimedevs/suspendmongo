@@ -16,6 +16,7 @@
 
 package example.repository
 
+import com.mongodb.client.model.Sorts
 import com.sparetimedevs.suspendmongo.Collection
 import com.sparetimedevs.suspendmongo.Database
 import com.sparetimedevs.suspendmongo.crud.countAllSuspendMongoResult
@@ -34,6 +35,7 @@ import io.kotlintest.specs.BehaviorSpec
 import io.mockk.coEvery
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import org.bson.conversions.Bson
 
 class TestUserRepositoryTest : BehaviorSpec({
 
@@ -115,6 +117,31 @@ class TestUserRepositoryTest : BehaviorSpec({
 				val userRepository = TestUserRepository(mockDatabase)
 
 				val resultContainingListOfTestUsers = userRepository.readAll()
+
+				resultContainingListOfTestUsers.fold(
+						{ fail("This test case should yield a Success.") },
+						{ it shouldBe listOfTestUsersInMongo }
+				)
+			}
+		}
+
+		`when`("read all sorted") {
+			then("returns all test users sorted.") {
+				val mockDatabase = mockk<Database>()
+				mockkStatic("com.sparetimedevs.suspendmongo.crud.InternalOperationKt")
+
+				val listOfTestUsersInMongo = arrayListOf(
+						TestUser(firstName = "a", lastName = "b", age = 31, email = "c"),
+						TestUser(firstName = "d", lastName = "e", age = 29, email = "f")
+				)
+
+				val sort: Bson = Sorts.descending("firstName")
+
+				coEvery { readAllSuspendMongoResult(any<Collection<TestUser>>(), sort) } returns Result.Success(listOfTestUsersInMongo)
+
+				val userRepository = TestUserRepository(mockDatabase)
+
+				val resultContainingListOfTestUsers = userRepository.readAll(sort)
 
 				resultContainingListOfTestUsers.fold(
 						{ fail("This test case should yield a Success.") },

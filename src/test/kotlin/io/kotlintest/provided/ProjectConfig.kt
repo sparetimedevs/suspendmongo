@@ -18,7 +18,7 @@ package io.kotlintest.provided
 
 import io.kotlintest.AbstractProjectConfig
 import io.kotlintest.extensions.TestListener
-import test.listener.StopMongoDbListener
+import test.listener.StopTestContainersListener
 import java.lang.System.currentTimeMillis
 
 /**
@@ -27,12 +27,12 @@ import java.lang.System.currentTimeMillis
  */
 object ProjectConfig : AbstractProjectConfig() {
 
-	override fun listeners(): List<TestListener> = listOf(StopMongoDbListener)
+	override fun listeners(): List<TestListener> = listOf(StopTestContainersListener)
 
 	private var started: Long = 0
 
 	override fun beforeAll() {
-		started = System.currentTimeMillis()
+		started = currentTimeMillis()
 	}
 
 	override fun afterAll() {

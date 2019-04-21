@@ -16,15 +16,12 @@
 
 package test.listener
 
-import io.kotlintest.Description
+import io.kotlintest.Spec
 
-object StartMongoDbListener : MongoDbListener() {
+object StartTestContainersListener : TestContainersListener() {
 
-	override fun beforeTest(description: Description) {
-		when {
-			this.mongodProcess == null -> startMongoDb()
-			!this.mongodProcess!!.isProcessRunning -> startMongoDb()
-			else -> return
-		}
+	override fun beforeSpec(spec: Spec) {
+		super.beforeSpec(spec)
+		startTestContainers()
 	}
 }
