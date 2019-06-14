@@ -41,8 +41,16 @@ suspend inline fun <reified T : Any> Collection<T>.readOne(vararg pairsOfFieldNa
     return readOneSuspendMongoResult(collection = this, filter = filter)
 }
 
+suspend inline fun <reified T : Any> Collection<T>.readOne(filter: Bson): Result<Error, T> {
+    return readOneSuspendMongoResult(collection = this, filter = filter)
+}
+
 suspend inline fun <reified T : Any> Collection<T>.readAll(): Result<Error, List<T>> {
     return readAllSuspendMongoResult(collection = this)
+}
+
+suspend inline fun <reified T : Any> Collection<T>.readAll(sort: Bson): Result<Error, List<T>> {
+    return readAllSuspendMongoResult(collection = this, sort = sort)
 }
 
 suspend inline fun <reified T : Any> Collection<T>.updateOne(id: ObjectId, entity: T): Result<Error, T> {

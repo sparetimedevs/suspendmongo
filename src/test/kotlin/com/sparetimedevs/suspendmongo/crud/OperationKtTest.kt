@@ -16,6 +16,7 @@
 
 package com.sparetimedevs.suspendmongo.crud
 
+import com.mongodb.client.model.Sorts
 import com.sparetimedevs.suspendmongo.Collection
 import com.sparetimedevs.suspendmongo.TestObject
 import com.sparetimedevs.suspendmongo.result.Result
@@ -26,6 +27,7 @@ import io.kotlintest.specs.BehaviorSpec
 import io.mockk.coEvery
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import org.bson.conversions.Bson
 
 class OperationKtTest : BehaviorSpec({
 
@@ -75,6 +77,25 @@ class OperationKtTest : BehaviorSpec({
 				coEvery { readAllSuspendMongoResult(any<Collection<TestObject>>()) } returns returnedSuspendMongoResult
 
 				val listOfTestTypesInResult = mockCollection.readAll()
+
+				listOfTestTypesInResult shouldBe returnedSuspendMongoResult
+			}
+		}
+
+		`when`("read all sorted") {
+			then("returns all objects sorted.") {
+				val listOfTestTypesInMongo = arrayListOf(
+						TestObject(a = "a", b = 2),
+						TestObject(a = "d", b = 4)
+				)
+
+				val sort: Bson = Sorts.descending("a")
+
+				val returnedSuspendMongoResult = Result.Success(listOfTestTypesInMongo)
+
+				coEvery { readAllSuspendMongoResult(any<Collection<TestObject>>(), sort) } returns returnedSuspendMongoResult
+
+				val listOfTestTypesInResult = mockCollection.readAll(sort)
 
 				listOfTestTypesInResult shouldBe returnedSuspendMongoResult
 			}

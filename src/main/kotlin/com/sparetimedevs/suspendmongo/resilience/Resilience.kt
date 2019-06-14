@@ -21,12 +21,11 @@ import io.github.resilience4j.bulkhead.BulkheadConfig
 import io.github.resilience4j.retry.IntervalFunction
 import io.github.resilience4j.retry.Retry
 import io.github.resilience4j.retry.RetryConfig
-import java.util.function.Supplier
 
-class Resilience(maxConcurrentCalls: Int = 15, maxWaitMillis: Long = 3000, maxRetries: Int = 3) {
+class Resilience(maxConcurrentCalls: Int = 15, maxWaitMillis: Long = 3000, maxAttempts: Int = 3) {
 
-    private val retryConfig = RetryConfig.custom()
-            .maxAttempts(maxRetries)
+    private val retryConfig = RetryConfig.custom<RetryConfig>()
+            .maxAttempts(maxAttempts)
             .intervalFunction(IntervalFunction.ofExponentialBackoff(125L, 3.0))
             .retryOnException { true }
             .build()
@@ -36,8 +35,6 @@ class Resilience(maxConcurrentCalls: Int = 15, maxWaitMillis: Long = 3000, maxRe
             .maxWaitTime(maxWaitMillis)
             .build()
 
-    private val retry = Retry.of("mongo-retry", retryConfig)
-    private val bulkhead = Bulkhead.of("mongo-bulkhead", bulkheadConfig)
-
-    internal fun <T> executeSupplier(supplier: Supplier<T>): T = bulkhead.executeSupplier { retry.executeSupplier(supplier) }
+    internal val retry = Retry.of("mongo-retry", retryConfig)
+    internal val bulkhead = Bulkhead.of("mongo-bulkhead", bulkheadConfig)
 }

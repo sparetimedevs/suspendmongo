@@ -28,6 +28,7 @@ import com.sparetimedevs.suspendmongo.getCollection
 import com.sparetimedevs.suspendmongo.result.Error
 import com.sparetimedevs.suspendmongo.result.Result
 import example.model.TestUser
+import org.bson.conversions.Bson
 import org.bson.types.ObjectId
 
 class TestUserRepository(database: Database) {
@@ -40,7 +41,11 @@ class TestUserRepository(database: Database) {
 
 	suspend fun readOne(vararg pairsOfFieldNamesAndValues: Pair<String, Any>): Result<Error, TestUser> = collection.readOne(*pairsOfFieldNamesAndValues)
 
+	suspend fun readOne(filter: Bson) = collection.readOne(filter)
+
 	suspend fun readAll() = collection.readAll()
+
+	suspend fun readAll(sort: Bson) = collection.readAll(sort)
 
 	suspend fun updateOne(id: ObjectId, testUser: TestUser) = collection.updateOne(id, testUser)
 
