@@ -23,13 +23,11 @@ import com.sparetimedevs.suspendmongo.result.Result
 import io.github.resilience4j.bulkhead.operator.BulkheadOperator
 import io.github.resilience4j.retry.transformer.RetryTransformer
 import io.reactivex.Flowable
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.reactive.flow.asFlow
+import kotlinx.coroutines.reactive.asFlow
 import org.bson.conversions.Bson
 
-@FlowPreview
 @PublishedApi
 internal suspend fun <T: Any> createOneSuspendMongoResult(collection: Collection<T>, entity: T): Result<Error, T> {
     val resilience = collection.getDatabaseResilience()
@@ -38,7 +36,7 @@ internal suspend fun <T: Any> createOneSuspendMongoResult(collection: Collection
         when (
             Flowable.fromPublisher(mongoCollection.insertOne(entity))
                     .compose(RetryTransformer.of(resilience.retry))
-                    .lift(BulkheadOperator.of(resilience.bulkhead))
+                    .compose(BulkheadOperator.of(resilience.bulkhead))
                     .asFlow()
                     .single()
             ) {
@@ -50,7 +48,6 @@ internal suspend fun <T: Any> createOneSuspendMongoResult(collection: Collection
     }
 }
 
-@FlowPreview
 @PublishedApi
 internal suspend fun <T: Any> readOneSuspendMongoResult(collection: Collection<T>, filter: Bson): Result<Error, T> {
     val resilience = collection.getDatabaseResilience()
@@ -59,7 +56,7 @@ internal suspend fun <T: Any> readOneSuspendMongoResult(collection: Collection<T
         Result.Success(
                 Flowable.fromPublisher(mongoCollection.find(filter))
                         .compose(RetryTransformer.of(resilience.retry))
-                        .lift(BulkheadOperator.of(resilience.bulkhead))
+                        .compose(BulkheadOperator.of(resilience.bulkhead))
                         .asFlow()
                         .single()
         )
@@ -72,7 +69,6 @@ internal suspend fun <T: Any> readOneSuspendMongoResult(collection: Collection<T
     }
 }
 
-@FlowPreview
 @PublishedApi
 internal suspend fun <T: Any> readAllSuspendMongoResult(collection: Collection<T>): Result<Error, List<T>> {
     val resilience = collection.getDatabaseResilience()
@@ -81,7 +77,7 @@ internal suspend fun <T: Any> readAllSuspendMongoResult(collection: Collection<T
         Result.Success(
                 Flowable.fromPublisher(mongoCollection.find())
                         .compose(RetryTransformer.of(resilience.retry))
-                        .lift(BulkheadOperator.of(resilience.bulkhead))
+                        .compose(BulkheadOperator.of(resilience.bulkhead))
                         .asFlow()
                         .toList()
         )
@@ -90,7 +86,6 @@ internal suspend fun <T: Any> readAllSuspendMongoResult(collection: Collection<T
     }
 }
 
-@FlowPreview
 @PublishedApi
 internal suspend fun <T: Any> readAllSuspendMongoResult(collection: Collection<T>, sort: Bson): Result<Error, List<T>> {
     val resilience = collection.getDatabaseResilience()
@@ -99,7 +94,7 @@ internal suspend fun <T: Any> readAllSuspendMongoResult(collection: Collection<T
         Result.Success(
                 Flowable.fromPublisher(mongoCollection.find().sort(sort))
                         .compose(RetryTransformer.of(resilience.retry))
-                        .lift(BulkheadOperator.of(resilience.bulkhead))
+                        .compose(BulkheadOperator.of(resilience.bulkhead))
                         .asFlow()
                         .toList()
         )
@@ -108,7 +103,6 @@ internal suspend fun <T: Any> readAllSuspendMongoResult(collection: Collection<T
     }
 }
 
-@FlowPreview
 @PublishedApi
 internal suspend fun <T: Any> updateOneSuspendMongoResult(collection: Collection<T>, filter: Bson, entity: T): Result<Error, T> {
     val resilience = collection.getDatabaseResilience()
@@ -117,7 +111,7 @@ internal suspend fun <T: Any> updateOneSuspendMongoResult(collection: Collection
         Result.Success(
                 Flowable.fromPublisher(mongoCollection.findOneAndReplace(filter, entity))
                         .compose(RetryTransformer.of(resilience.retry))
-                        .lift(BulkheadOperator.of(resilience.bulkhead))
+                        .compose(BulkheadOperator.of(resilience.bulkhead))
                         .asFlow()
                         .single()
         )
@@ -126,7 +120,6 @@ internal suspend fun <T: Any> updateOneSuspendMongoResult(collection: Collection
     }
 }
 
-@FlowPreview
 @PublishedApi
 internal suspend fun <T: Any> deleteOneSuspendMongoResult(collection: Collection<T>, filter: Bson): Result<Error, T> {
     val resilience = collection.getDatabaseResilience()
@@ -135,7 +128,7 @@ internal suspend fun <T: Any> deleteOneSuspendMongoResult(collection: Collection
         Result.Success(
                 Flowable.fromPublisher(mongoCollection.findOneAndDelete(filter))
                         .compose(RetryTransformer.of(resilience.retry))
-                        .lift(BulkheadOperator.of(resilience.bulkhead))
+                        .compose(BulkheadOperator.of(resilience.bulkhead))
                         .asFlow()
                         .single()
         )
@@ -144,7 +137,6 @@ internal suspend fun <T: Any> deleteOneSuspendMongoResult(collection: Collection
     }
 }
 
-@FlowPreview
 @PublishedApi
 internal suspend fun <T: Any> deleteAllSuspendMongoResult(collection: Collection<T>): Result<Error, Boolean> {
     val resilience = collection.getDatabaseResilience()
@@ -153,7 +145,7 @@ internal suspend fun <T: Any> deleteAllSuspendMongoResult(collection: Collection
         when (
             Flowable.fromPublisher(mongoCollection.drop())
                 .compose(RetryTransformer.of(resilience.retry))
-                .lift(BulkheadOperator.of(resilience.bulkhead))
+                .compose(BulkheadOperator.of(resilience.bulkhead))
                 .asFlow()
                 .single()
             ) {
@@ -165,7 +157,6 @@ internal suspend fun <T: Any> deleteAllSuspendMongoResult(collection: Collection
     }
 }
 
-@FlowPreview
 @PublishedApi
 internal suspend fun <T: Any> countAllSuspendMongoResult(collection: Collection<T>): Result<Error, Long> {
     val resilience = collection.getDatabaseResilience()
@@ -174,7 +165,7 @@ internal suspend fun <T: Any> countAllSuspendMongoResult(collection: Collection<
         Result.Success(
                 Flowable.fromPublisher(mongoCollection.countDocuments())
                         .compose(RetryTransformer.of(resilience.retry))
-                        .lift(BulkheadOperator.of(resilience.bulkhead))
+                        .compose(BulkheadOperator.of(resilience.bulkhead))
                         .asFlow()
                         .single()
         )

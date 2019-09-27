@@ -21,6 +21,7 @@ import io.github.resilience4j.bulkhead.BulkheadConfig
 import io.github.resilience4j.retry.IntervalFunction
 import io.github.resilience4j.retry.Retry
 import io.github.resilience4j.retry.RetryConfig
+import java.time.Duration
 
 class Resilience(maxConcurrentCalls: Int = 15, maxWaitMillis: Long = 3000, maxAttempts: Int = 3) {
 
@@ -32,7 +33,7 @@ class Resilience(maxConcurrentCalls: Int = 15, maxWaitMillis: Long = 3000, maxAt
 
     private val bulkheadConfig = BulkheadConfig.custom()
             .maxConcurrentCalls(maxConcurrentCalls)
-            .maxWaitTime(maxWaitMillis)
+            .maxWaitDuration(Duration.ofMillis(maxWaitMillis))
             .build()
 
     internal val retry = Retry.of("mongo-retry", retryConfig)
